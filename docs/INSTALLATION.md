@@ -35,7 +35,7 @@ Use a unique, strong database password.
 ```bash
 cd /var/www
 
-git clone https://github.com/OWNER/PteroHub.git pterohub
+git clone https://github.com/PteroHub/pterohub.git pterohub
 
 cd /var/www/pterohub
 ```
