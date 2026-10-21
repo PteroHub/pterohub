@@ -1,76 +1,82 @@
 # PteroHub
 
-**A modern hosting management and billing platform integrated with Pterodactyl.**
+PteroHub is a Laravel 12 game-server hosting management and billing platform integrated with the Pterodactyl Application API. It provides a public hosting catalog, client portal, administrative management, manual server provisioning, customer account synchronization, SMTP notifications, service diagnostics and simulated billing.
 
-PteroHub is a self-hosted platform designed to manage hosting services, customer accounts, orders, billing, and game server provisioning through the Pterodactyl Panel.
-
-The project aims to provide a unified experience for hosting providers, administrators, and customers.
-
-## Features
-
-PteroHub is designed around the following capabilities:
-
-- Modern, responsive public website
-- Customer registration and authentication
-- Customer dashboard
-- Hosting products and service plans
-- Order and service management
-- Billing and invoice management
-- Payment gateway integration
-- Pterodactyl API integration
-- Game server provisioning and management
-- Administrative dashboard
-- Centralized application settings
-- Customizable branding
-
-Feature availability depends on the installed release.
+> **Release candidate RC 1.02, not production-ready billing software.** Stripe and PayPal integrations are **sandbox-only**, disabled by default. Real charges, fiscal invoices, automatic server provisioning, automatic renewals, refunds and production payment settlement are **not implemented or approved for production**.
 
 ## Requirements
 
-PteroHub requires a Linux-based web hosting environment with a supported PHP runtime, database server, web server, and dependency manager.
+- PHP 8.2+ and common Laravel extensions (`mbstring`, `xml`, `curl`, `zip`, `pdo_mysql`, `openssl`, `ctype`, `tokenizer`, `fileinfo`, `bcmath`)
+- Composer 2
+- MySQL 8 / MariaDB (tested deployment uses MariaDB; migration compatibility should be checked on your version)
+- Nginx or Apache with document root pointing to `public/`
+- A separately installed Pterodactyl panel with an Application API key (optional for initial UI setup)
+- HTTPS and working SMTP for account verification
 
-Exact PHP, database, Node.js, and Composer requirements must be verified against the release before installation.
+No Node.js build is required: the frontend uses **one CSS** file (`public/assets/pterohub.css`) and **one JavaScript** file (`public/assets/pterohub.js`).
 
-A working Pterodactyl Panel is required to use server provisioning features.
+## Quick start (new installation)
 
-## Installation
+```bash
+git clone https://github.com/PteroHub/pterohub.git
+cd pterohub
+composer install --no-dev --optimize-autoloader
+cp .env.example .env
+php artisan key:generate
+# Edit .env with your database, APP_URL and mail configuration.
+php artisan migrate --force
+php artisan pterohub:create-admin
+php artisan optimize:clear
+php artisan view:cache
+```
 
-Read [Installation Guide](docs/INSTALLATION.md) for the complete installation procedure.
+Configure your web server to serve `public/`, then visit `/ph-admin/login`. For a local development preview use `php artisan serve` and `APP_URL=http://127.0.0.1:8000`. **Do not use `artisan serve` as a public production web server.**
 
-Additional documentation:
+**Important:** This repository contains application source and the Laravel entrypoint, but intentionally excludes `vendor/`, `.env`, runtime files, uploaded data, backups and credentials. Do not copy your production `.env` into Git.
 
-- [Configuration](docs/CONFIGURATION.md)
-- [Updating](docs/UPDATING.md)
-- [Troubleshooting](docs/TROUBLESHOOTING.md)
-- [Security](docs/SECURITY.md)
-- [Architecture](docs/ARCHITECTURE.md)
+## Documentation
 
-## Pterodactyl Integration
+| Guide | Contents |
+| --- | --- |
+| [Installation](docs/INSTALLATION.md) | Debian, PHP, MariaDB, Nginx, permissions, admin account |
+| [Configuration](docs/CONFIGURATION.md) | Environment, SMTP, Pterodactyl API, sandbox providers |
+| [Deployment and upgrades](docs/DEPLOYMENT.md) | Safe updates, backups, rollback and validation |
+| [Architecture](docs/ARCHITECTURE.md) | Application structure, integration boundaries and lifecycle |
+| [Frontend](docs/FRONTEND.md) | Single CSS/JS policy, accessibility and mobile testing |
+| [Security](docs/SECURITY.md) | API permissions, data handling and disclosure |
+| [Troubleshooting](docs/TROUBLESHOOTING.md) | Common setup and integration problems |
+| [Release readiness](docs/RELEASE_CHECKLIST.md) | Remaining work before production |
+| [GitHub publishing](docs/GITHUB.md) | Safe repository upload, secrets and tagging |
 
-PteroHub communicates with Pterodactyl using its API.
+## URLs
 
-Configure the Pterodactyl Panel URL and an appropriately scoped API key through the supported application configuration.
+- `/` public website
+- `/client` customer portal
+- `/ph-admin/login` administrator login
+- `/ph-admin` administration
+- `/ph-admin/sandbox-payments` sandbox payment diagnostics
 
-Keep API credentials private and never commit them to the repository.
+## Current safety boundaries
 
-## Development
+- Game server provisioning is **manual** and requires an administrator action.
+- Client identity synchronization uses the Pterodactyl Application API. Existing linked user IDs and server ownership are preserved.
+- Customer passwords are not synchronized with Pterodactyl.
+- Service renewal planning is **not** automatic renewal or payment collection.
+- Sandbox payment evidence is separate from commercial orders, invoices and services.
+- Production payments must remain disabled until a separate audited release.
 
-Contributions, bug reports, and feature suggestions are welcome through GitHub Issues and Pull Requests.
+## Development and validation
 
-Before submitting changes, review the contribution guidelines and test your changes in a development environment.
+```bash
+composer install
+php artisan route:list
+php artisan migrate:status
+php artisan pterohub:beta-audit  # read-only database consistency checks
+php artisan view:cache
+```
 
-## Security
+`pterohub:beta-audit` is read-only but requires a configured database and completed migrations. The release ZIP is not a backup of your database or live configuration.
 
-Never publish production environment files, API keys, database credentials, payment gateway secrets, or customer information.
+## Contributing and license
 
-Please report security vulnerabilities privately rather than opening public issues containing sensitive information.
-
-## License
-
-See the LICENSE file for the applicable license and redistribution terms.
-
-## Disclaimer
-
-PteroHub is an independent project and is not officially affiliated with or endorsed by Pterodactyl.
-
-Pterodactyl is a separate project maintained by its respective developers and contributors.
+See [CONTRIBUTING.md](CONTRIBUTING.md). **License not yet selected by the project owner.** The repository is currently marked `proprietary` in Composer to avoid implying an open-source license. Public source visibility does not automatically grant reuse rights. Choose and add a license before inviting external redistribution.

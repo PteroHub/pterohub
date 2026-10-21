@@ -1,0 +1,5 @@
+@extends('pterohub.layout')
+@section('title','Sign in')
+@section('content')
+<div class="auth-card"><div class="auth-head"><img src="{{ asset('assets/pterohub-logo.webp') }}" alt="" width="40" height="40" class="ph-brand-image"><div class="auth-brand">PteroHub <small>ADMINISTRATION</small></div></div><div class="auth-deco">✦</div><h1>Welcome back</h1><p class="intro">Sign in to manage your game hosting catalog.</p><form method="POST" action="{{ route('pterohub.login.submit') }}">@csrf<div class="field"><label for="email">Email address</label><input id="email" type="email" name="email" autocomplete="username" value="{{ old('email') }}" placeholder="admin@example.com" required autofocus></div><div class="field"><label for="password">Password</label><input id="password" type="password" name="password" autocomplete="current-password" placeholder="Enter your password" required></div><button class="button primary full" type="submit">Sign in <span aria-hidden="true"></span></button></form><div class="auth-foot">Private administrative access · PteroHub</div></div>
+@endsection
