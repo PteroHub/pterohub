@@ -1,0 +1,18 @@
+name: Source syntax checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - name: PHP syntax
+        run: find app bootstrap config database routes resources public -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: JavaScript syntax
+        run: node --check public/assets/pterohub.js

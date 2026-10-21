@@ -1,0 +1,22 @@
+@extends('pterohub.layout')
+@section('title','Billing preview')
+@section('content')
+<div class="ph-invoices">
+<div class="ph-page-head"><div><div class="ph-eyebrow">COMMERCE / BILLING</div><h1>{{ $invoice->number ?: 'Draft document #'.$invoice->id }}</h1><p>Canary simulation only. Not a fiscal invoice or proof of payment.</p></div><a class="ph-button ph-soft" href="{{ route('pterohub.invoices.index') }}">Invoices</a></div>
+@if(session('ok'))<div class="ph-notice">{{ session('ok') }}</div>@endif
+@if($errors->any())<div class="ph-error" role="alert">@foreach($errors->all() as $error)<div>{{ $error }}</div>@endforeach</div>@endif
+<div class="ph-summary"><div><span>Customer</span><strong>{{ $snapshot['legal_name'] ?? $invoice->customer_name }}</strong><small>{{ $snapshot['email'] ?? $invoice->customer_email }}</small><small>{{ ($snapshot['customer_type'] ?? 'individual') === 'business' ? 'Business' : 'Individual' }}</small></div><div><span>Status</span><strong>{{ ucfirst($invoice->status) }}</strong><small>Simulated billing only</small></div><div><span>Source order</span><strong>#{{ $invoice->order_id ?? '—' }}</strong><small>{{ $invoice->currency }} · {{ $invoice->number ?: 'Unnumbered draft' }}</small></div></div>
+<div class="ph-panel"><div class="ph-panel-head"><div><h2>Document lines</h2><p>Tax calculation and fiscal issuance are not enabled.</p></div><span class="ph-status">TEST DOCUMENT</span></div><div class="ph-table-wrap"><table><thead><tr><th>Description</th><th>Qty</th><th>Unit price</th><th>Line total</th></tr></thead><tbody>@foreach($items as $item)<tr><td>{{ $item->description }}</td><td>{{ $item->quantity }}</td><td>€ {{ number_format($item->unit_price_minor/100,2,',','.') }}</td><td>€ {{ number_format($item->total_minor/100,2,',','.') }}</td></tr>@endforeach</tbody></table></div><div class="ph-totals"><div><span>Subtotal</span><strong>€ {{ number_format($invoice->subtotal_minor/100,2,',','.') }}</strong></div><div><span>Tax</span><strong>Not calculated</strong></div><div class="ph-total"><span>Test total</span><strong>€ {{ number_format($invoice->total_minor/100,2,',','.') }}</strong></div></div>
+<dl class="ph-service-details"><div><dt>Issued on (test)</dt><dd>{{ $invoice->issued_on ?: 'Not issued' }}</dd></div><div><dt>Due on (test)</dt><dd>{{ $invoice->due_on ?: 'Not set' }}</dd></div><div><dt>Simulated paid at</dt><dd>{{ $invoice->paid_at ?: 'Not paid' }}</dd></div></dl></div>
+<div class="ph-panel ph-canary-billing"><div class="ph-panel-head"><div><h2>Billing simulation</h2><p>Administrator-only test actions. No gateway, bank transaction, tax invoice or Pterodactyl API call.</p></div></div>
+@if($invoice->status === 'draft')
+<form method="POST" action="{{ route('pterohub.invoices.issue',$invoice->id) }}" class="ph-canary-form">@csrf<label>Due in days (test)<select name="due_days" required><option value="7">7 days</option><option value="14" selected>14 days</option><option value="30">30 days</option></select></label><button type="submit" class="ph-button ph-primary">Issue test document</button></form>
+@elseif($invoice->status === 'issued')
+<form method="POST" action="{{ route('pterohub.invoices.pay',$invoice->id) }}" class="ph-canary-form">@csrf<p>Enter <strong>SIMULATE</strong> to mark this test document paid. No real payment occurs.</p><label>Confirmation<input name="confirmation" required autocomplete="off" placeholder="SIMULATE"></label><button type="submit" class="ph-button ph-primary">Simulate payment</button></form>
+@elseif($invoice->status === 'paid')<p>This document has a simulated payment. Further payments and cancellations are blocked.</p>
+@else<p>This document was cancelled. Its reference and audit history remain available.</p>@endif
+@if(in_array($invoice->status,['draft','issued'],true))<form method="POST" action="{{ route('pterohub.invoices.cancel',$invoice->id) }}" class="ph-canary-form">@csrf<p>To cancel, enter <strong>CANCEL</strong>. Issued test references are not reused.</p><label>Confirmation<input name="confirmation" required autocomplete="off" placeholder="CANCEL"></label><button type="submit" class="ph-button ph-soft">Cancel test document</button></form>@endif
+</div>
+<div class="ph-panel"><div class="ph-panel-head"><h2>Billing activity</h2></div><ul class="ph-canary-events">@forelse($events as $event)<li><strong>{{ str_replace('_',' ',ucfirst($event->action)) }}</strong> · {{ $event->created_at }} · {{ $event->actor_name ?? 'System' }}</li>@empty<li>No activity recorded yet.</li>@endforelse</ul></div>
+</div>
+@endsection
